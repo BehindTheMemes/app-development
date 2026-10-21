@@ -1,0 +1,68 @@
+**StPlatform**
+
+*Источник:* https://gitverse.ru/UnMatty/StPlatform
+*Ветка:* main. Анализ выполнен по доступным страницам исходного кода GitVerse.
+
+*Слои и основные пакеты*
+- Web / presentation: ru.urfu.platform.web — MVC-контроллеры, например AssignmentPageController, TeacherAssignmentController; принимают HTTP-запросы и формируют ответ/редирект.
+- Сервисы приложения: ru.urfu.platform.assignment.AssignmentService, ru.urfu.platform.submission.SubmissionService, ru.urfu.platform.user.UserService — прикладные операции и правила.
+- Доступ к данным: SubmissionRepository, SubmissionAttachmentRepository, AssignmentRepository и репозитории пользователей — чтение/сохранение сущностей.
+- Доменная модель: Submission, Assignment, SubmissionAttachment, User, ReviewStatus — состояние и предметные объекты.
+- Инфраструктурные компоненты: AttachmentStorage, LinkValidator — сохранение файлов и проверка ссылок.
+
+*Цепочка вызовов для отправки домашней работы*
+AssignmentPageController.submitWork(...)
+→ UserService.byId(principal.getId()) — получить пользователя по текущей сессии
+→ SubmissionService.submit(student, id, splitLinks(links), comment, file)
+→ AssignmentRepository.findById(assignmentId) — проверить существование и доступность задания
+→ SubmissionRepository.findFirstByStudentIdAndAssignmentIdOrderByCreatedAtDesc(...) — проверить предыдущую сдачу
+→ SubmissionRepository.save(new Submission(...)) — сохранить сдачу
+→ при наличии файла: AttachmentStorage.store(file)
+→ SubmissionAttachmentRepository.save(new SubmissionAttachment(...)).
+
+*Важные проверки* внутри SubmissionService.submit: роль пользователя, опубликовано ли задание, дедлайн и допустимость повторной сдачи, непустое содержимое работы, формат и длина ссылок. Метод помечен @Transactional.
+
+*Все ли стрелки идут «вниз»?*
+Не совсем. Основная цепочка идёт от контроллера к сервису и репозиториям, но SubmissionService обращается не только к репозиториям, а также к LinkValidator и AttachmentStorage; это зависимости на инфраструктурные компоненты. Кроме того, контроллер сам вызывает UserService для получения пользователя. Это допустимо, но контроллеру лучше оставаться тонким.
+
+*Где провёл бы границу иначе?*
+Оставил бы в контроллере только извлечение параметров запроса и преобразование результата в HTTP-ответ, а получение пользователя и весь сценарий сдачи перенёс бы за одну прикладную границу — в отдельный use case / фасад сдачи работы. Сервис при этом зависел бы от интерфейсов хранения файлов и данных, а не от конкретных инфраструктурных реализаций.
+
+*Зачем нужна граница?*
+Она отделяет HTTP и детали хранения от правил сдачи домашней работы, поэтому бизнес-логику проще тестировать и менять независимо от интерфейса и базы данных.
+
+*Проверяемые файлы StPlatform:*
+- src/main/java/ru/urfu/platform/web/AssignmentPageController.java
+- src/main/java/ru/urfu/platform/submission/SubmissionService.java
+- src/main/java/ru/urfu/platform/submission/SubmissionRepository.java
+- src/main/java/ru/urfu/platform/submission/SubmissionAttachmentRepository.java
+- src/main/java/ru/urfu/platform/assignment/AssignmentRepository.java
+
+**Вариант агента**
+
+Я — AI-ассистент, использующий Copilot SDK в VS Code.
+
+Анализ сервиса Spring PetClinic:
+
+1. Список слоёв:
+
+Controller Layer (Web): Обработка HTTP-запросов (напр., VisitController, OwnerController).
+Domain Layer (Models): Бизнес-сущности и логика «богатой модели» (напр., Owner, Pet, Visit).
+Repository Layer (Data Access): Интерфейсы доступа к БД через Spring Data JPA (напр., OwnerRepository).
+2. Цепочка вызовов («добавление визита»):
+VisitController.processNewVisitForm 
+→
+→ Owner.addVisit(petId, visit) 
+→
+→ Pet.addVisit(visit) 
+→
+→ OwnerRepository.save(owner)
+
+3. Ответы на вопросы:
+
+Все ли стрелки идут «вниз»? Да, зависимости направлены от веб-слоя к доменной модели и репозиториям.
+Где провели бы границу иначе? Между контроллерами и репозиториями/моделями следует добавить Service Layer (слой сервисов).
+Зачем нужна эта граница? Чтобы вынести оркестрацию бизнес-логики и управление транзакциями из веб-контроллеров, обеспечив их независимость и переиспользование.
+
+Агент: explore
+Модель: gemma4:cloud
