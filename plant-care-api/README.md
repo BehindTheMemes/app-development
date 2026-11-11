@@ -284,7 +284,7 @@ openapi-generator-cli generate -i api.yaml -g python-flask -o generated_service
 
 ---
 
-## 7. Проверка спецификации
+## 6. Проверка спецификации
 
 `api.yaml` можно открыть в Swagger Editor:
 
@@ -300,7 +300,7 @@ openapi-generator-cli generate -i api.yaml -g python-flask -o generated_service
 
 ---
 
-## 8. Структура проекта
+## 7. Структура проекта
 
 ```text
 plant-care-api/
