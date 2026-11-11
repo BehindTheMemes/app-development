@@ -1,0 +1,41 @@
+Проектная проверка
+
+{
+  "openapi_version": "3.0.3",
+  "paths": 2,
+  "operations": [
+    [
+      "GET",
+      "/plants"
+    ],
+    [
+      "POST",
+      "/plants"
+    ],
+    [
+      "GET",
+      "/plants/{plantId}"
+    ],
+    [
+      "PATCH",
+      "/plants/{plantId}"
+    ],
+    [
+      "DELETE",
+      "/plants/{plantId}"
+    ]
+  ],
+  "has_get_list": true,
+  "has_get_one": true,
+  "has_post": true,
+  "has_patch": true,
+  "has_delete": true,
+  "all_operations_have_summary": true,
+  "all_operations_have_200": true,
+  "all_operations_have_error": true,
+  "has_components_schemas": true,
+  "generated_openapi_exists": true,
+  "generated_main_exists": true,
+  "generated_requirements_exists": true,
+  "generated_spec_parses": true
+}
