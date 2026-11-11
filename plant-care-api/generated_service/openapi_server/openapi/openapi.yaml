@@ -1,0 +1,408 @@
+openapi: 3.0.3
+info:
+  description: API для управления домашними растениями и графиками их полива.
+  title: Plant Care API
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+tags:
+- description: Управление домашними растениями
+  name: Plants
+paths:
+  /plants:
+    get:
+      description: "Возвращает постраничный список растений, принадлежащих аутенти\
+        фицированному пользователю."
+      operationId: plants_get
+      parameters:
+      - description: "Номер страницы, начиная с 1."
+        explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          minimum: 1
+          type: integer
+        style: form
+      - description: Количество растений на странице.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlantListResponse"
+          description: Список растений успешно получен.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+      security:
+      - bearerAuth: []
+      summary: Получить список растений
+      tags:
+      - Plants
+      x-openapi-router-controller: openapi_server.controllers.plants_controller
+    post:
+      description: Создаёт новое растение для аутентифицированного пользователя.
+      operationId: plants_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlantCreateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlantResponse"
+          description: Растение успешно создано.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: "Запрос имеет корректный синтаксис, но содержит недопустимы\
+            е значения полей."
+      security:
+      - bearerAuth: []
+      summary: Создать растение
+      tags:
+      - Plants
+      x-openapi-router-controller: openapi_server.controllers.plants_controller
+  /plants/{plantId}:
+    delete:
+      description: "Удаляет растение, принадлежащее аутентифицированному пользоват\
+        елю."
+      operationId: plants_plant_id_delete
+      parameters:
+      - description: Публичный идентификатор растения.
+        explode: false
+        in: path
+        name: plantId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+          description: Растение успешно удалено.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Растение не существует или не принадлежит аутентифицированному
+            пользователю.
+      security:
+      - bearerAuth: []
+      summary: Удалить растение
+      tags:
+      - Plants
+      x-openapi-router-controller: openapi_server.controllers.plants_controller
+    get:
+      description: "Возвращает одно растение, принадлежащее аутентифицированному п\
+        ользователю."
+      operationId: plants_plant_id_get
+      parameters:
+      - description: Публичный идентификатор растения.
+        explode: false
+        in: path
+        name: plantId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlantResponse"
+          description: Растение успешно получено.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Растение не существует или не принадлежит аутентифицированному
+            пользователю.
+      security:
+      - bearerAuth: []
+      summary: Получить растение
+      tags:
+      - Plants
+      x-openapi-router-controller: openapi_server.controllers.plants_controller
+    patch:
+      description: Частично обновляет доступные для изменения данные растения.
+      operationId: plants_plant_id_patch
+      parameters:
+      - description: Публичный идентификатор растения.
+        explode: false
+        in: path
+        name: plantId
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlantUpdateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlantResponse"
+          description: Данные растения успешно обновлены.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Растение не существует или не принадлежит аутентифицированному
+            пользователю.
+      security:
+      - bearerAuth: []
+      summary: Обновить данные растения
+      tags:
+      - Plants
+      x-openapi-router-controller: openapi_server.controllers.plants_controller
+components:
+  schemas:
+    PlantCreateRequest:
+      example:
+        name: Монстера
+        species: Monstera deliciosa
+        wateringIntervalDays: 7
+        notes: Держать вдали от прямых солнечных лучей.
+      properties:
+        name:
+          example: Монстера
+          maxLength: 100
+          minLength: 1
+          title: name
+          type: string
+        species:
+          example: Monstera deliciosa
+          maxLength: 100
+          minLength: 1
+          title: species
+          type: string
+        wateringIntervalDays:
+          example: 7
+          maximum: 60
+          minimum: 1
+          title: wateringIntervalDays
+          type: integer
+        notes:
+          example: Держать вдали от прямых солнечных лучей.
+          maxLength: 500
+          title: notes
+          type: string
+      required:
+      - name
+      - species
+      - wateringIntervalDays
+      title: PlantCreateRequest
+      type: object
+    PlantUpdateRequest:
+      example:
+        name: name
+        species: species
+        wateringIntervalDays: 5
+        notes: notes
+      minProperties: 1
+      properties:
+        name:
+          maxLength: 100
+          minLength: 1
+          title: name
+          type: string
+        species:
+          maxLength: 100
+          minLength: 1
+          title: species
+          type: string
+        wateringIntervalDays:
+          maximum: 60
+          minimum: 1
+          title: wateringIntervalDays
+          type: integer
+        notes:
+          maxLength: 500
+          title: notes
+          type: string
+      title: PlantUpdateRequest
+      type: object
+    PlantResponse:
+      example:
+        id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        name: Монстера
+        species: Monstera deliciosa
+        wateringIntervalDays: 7
+        notes: Держать вдали от прямых солнечных лучей.
+        nextWateringDate: 2026-11-17
+      properties:
+        id:
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          format: uuid
+          title: id
+          type: string
+        name:
+          example: Монстера
+          title: name
+          type: string
+        species:
+          example: Monstera deliciosa
+          title: species
+          type: string
+        wateringIntervalDays:
+          example: 7
+          title: wateringIntervalDays
+          type: integer
+        notes:
+          example: Держать вдали от прямых солнечных лучей.
+          nullable: true
+          title: notes
+          type: string
+        nextWateringDate:
+          example: 2026-11-17
+          format: date
+          title: nextWateringDate
+          type: string
+      required:
+      - id
+      - name
+      - nextWateringDate
+      - species
+      - wateringIntervalDays
+      title: PlantResponse
+      type: object
+    PlantListResponse:
+      example:
+        items:
+        - id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          name: Монстера
+          species: Monstera deliciosa
+          wateringIntervalDays: 7
+          notes: Держать вдали от прямых солнечных лучей.
+          nextWateringDate: 2026-11-17
+        - id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+          name: Монстера
+          species: Monstera deliciosa
+          wateringIntervalDays: 7
+          notes: Держать вдали от прямых солнечных лучей.
+          nextWateringDate: 2026-11-17
+        page: 1
+        limit: 20
+        total: 2
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/PlantResponse"
+          title: items
+          type: array
+        page:
+          example: 1
+          title: page
+          type: integer
+        limit:
+          example: 20
+          title: limit
+          type: integer
+        total:
+          example: 2
+          title: total
+          type: integer
+      required:
+      - items
+      - limit
+      - page
+      - total
+      title: PlantListResponse
+      type: object
+    DeleteResponse:
+      example:
+        message: Растение успешно удалено.
+      properties:
+        message:
+          example: Растение успешно удалено.
+          title: message
+          type: string
+      required:
+      - message
+      title: DeleteResponse
+      type: object
+    ErrorResponse:
+      example:
+        code: PLANT_NOT_FOUND
+        message: Растение не существует или не принадлежит текущему пользователю.
+      properties:
+        code:
+          example: PLANT_NOT_FOUND
+          title: code
+          type: string
+        message:
+          example: Растение не существует или не принадлежит текущему пользователю.
+          title: message
+          type: string
+      required:
+      - code
+      - message
+      title: ErrorResponse
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+      x-bearerInfoFunc: openapi_server.controllers.security_controller.info_from_bearerAuth

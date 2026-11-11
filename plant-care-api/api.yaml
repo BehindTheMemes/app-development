@@ -1,0 +1,306 @@
+openapi: 3.0.3
+info:
+  title: Plant Care API
+  version: 1.0.0
+  description: API для управления домашними растениями и графиками их полива.
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Plants
+    description: Управление домашними растениями
+
+paths:
+  /plants:
+    get:
+      tags: [Plants]
+      summary: Получить список растений
+      description: Возвращает постраничный список растений, принадлежащих аутентифицированному пользователю.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы, начиная с 1.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Количество растений на странице.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Список растений успешно получен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantListResponse'
+        '401':
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags: [Plants]
+      summary: Создать растение
+      description: Создаёт новое растение для аутентифицированного пользователя.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlantCreateRequest'
+      responses:
+        '200':
+          description: Растение успешно создано.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantResponse'
+        '401':
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Запрос имеет корректный синтаксис, но содержит недопустимые значения полей.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /plants/{plantId}:
+    get:
+      tags: [Plants]
+      summary: Получить растение
+      description: Возвращает одно растение, принадлежащее аутентифицированному пользователю.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          description: Публичный идентификатор растения.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Растение успешно получено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantResponse'
+        '401':
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Растение не существует или не принадлежит аутентифицированному пользователю.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags: [Plants]
+      summary: Обновить данные растения
+      description: Частично обновляет доступные для изменения данные растения.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          description: Публичный идентификатор растения.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlantUpdateRequest'
+      responses:
+        '200':
+          description: Данные растения успешно обновлены.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlantResponse'
+        '401':
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Растение не существует или не принадлежит аутентифицированному пользователю.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags: [Plants]
+      summary: Удалить растение
+      description: Удаляет растение, принадлежащее аутентифицированному пользователю.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: plantId
+          in: path
+          required: true
+          description: Публичный идентификатор растения.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Растение успешно удалено.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '401':
+          description: Требуется аутентификация или переданный токен доступа недействителен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Растение не существует или не принадлежит аутентифицированному пользователю.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PlantCreateRequest:
+      type: object
+      required: [name, species, wateringIntervalDays]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Монстера
+        species:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Monstera deliciosa
+        wateringIntervalDays:
+          type: integer
+          minimum: 1
+          maximum: 60
+          example: 7
+        notes:
+          type: string
+          maxLength: 500
+          example: Держать вдали от прямых солнечных лучей.
+
+    PlantUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        species:
+          type: string
+          minLength: 1
+          maxLength: 100
+        wateringIntervalDays:
+          type: integer
+          minimum: 1
+          maximum: 60
+        notes:
+          type: string
+          maxLength: 500
+
+    PlantResponse:
+      type: object
+      required: [id, name, species, wateringIntervalDays, nextWateringDate]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        name:
+          type: string
+          example: Монстера
+        species:
+          type: string
+          example: Monstera deliciosa
+        wateringIntervalDays:
+          type: integer
+          example: 7
+        notes:
+          type: string
+          nullable: true
+          example: Держать вдали от прямых солнечных лучей.
+        nextWateringDate:
+          type: string
+          format: date
+          example: 2026-11-17
+
+    PlantListResponse:
+      type: object
+      required: [items, page, limit, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlantResponse'
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 2
+
+    DeleteResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: Растение успешно удалено.
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: PLANT_NOT_FOUND
+        message:
+          type: string
+          example: Растение не существует или не принадлежит текущему пользователю.
