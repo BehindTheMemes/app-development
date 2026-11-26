@@ -1,0 +1,59 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: async-jobs-rabbitmq
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: appuser
+      RABBITMQ_DEFAULT_PASS: apppass
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./service_a
+    container_name: async-jobs-api
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: appuser
+      RABBITMQ_PASSWORD: apppass
+      RABBITMQ_VHOST: /
+    ports:
+      - "8000:8000"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./service_b
+    container_name: async-jobs-worker
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: appuser
+      RABBITMQ_PASSWORD: apppass
+      RABBITMQ_VHOST: /
+      PROCESSING_DELAY_SECONDS: 2.5
+      PROCESSED_CACHE_PATH: /data/processed_jobs.json
+    volumes:
+      - worker_data:/data
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+  worker_data:
